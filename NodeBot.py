@@ -11,7 +11,7 @@ import cherrypy
 import time
 import pywaves as pw
 
-
+print("check_git")
 config = configparser.RawConfigParser()
 config.read('bot.cfg')
 
