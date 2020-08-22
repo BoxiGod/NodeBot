@@ -422,15 +422,16 @@ def insert_in_table(leasers, total_lease, total_reward, height):
             addr = sql.get_col2("address", address, "address")[0]
         payment_fees, block_fees, reinvest = sql.get_col2(
             "cur_payment_ratio_fees, cur_payment_ratio_block_reward, reinvest", address, "address")
-        calc_reward = (leaser.fee_payment * payment_fees / 100
-                       + leaser.block_payment * block_fees / 100) * ((100 - reinvest) / 100) + \
-                      ((int(boxinode_token_fee) / 100) * leaser.boxi_share * total_reward)
+        calc_reward = (leaser.fee_payment * payment_fees / 100 + leaser.block_payment * block_fees / 100
+                       + int(boxinode_token_fee) / 100 * leaser.boxi_share * total_reward) * (100 - reinvest) / 100
         to_reinvest = (leaser.fee_payment * payment_fees / 100
-                       + leaser.block_payment * block_fees / 100) * reinvest / 100
+                       + leaser.block_payment * block_fees / 100
+                       + int(boxinode_token_fee) / 100 * leaser.boxi_share * total_reward) * reinvest / 100
         boxi_reward = int(boxinode_per_block_reward) * 1000 * leaser.share / 100
-        sql.update_col(addr, "cur_reward", int(calc_reward) + int(sql.get_col2("cur_reward", address, "address")[0]),
-                       "address")
-        sql.update_col(addr, 'cur_boxi_reward', int(boxi_reward), "address")
+        sql.update_col(addr, "cur_reward", int(calc_reward) 
+                       + int(sql.get_col2("cur_reward", address, "address")[0]), "address")
+        sql.update_col(addr, 'cur_boxi_reward', int(boxi_reward)
+                       + int(sql.get_col2("cur_boxi_reward", address, "address")[0]), "address")
         if to_reinvest > 0:
             sql.insert_reinvest(height, to_reinvest, address)
         notify_block(calc_reward+to_reinvest, reinvest, leaser, total_lease, total_reward)
