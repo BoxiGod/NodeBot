@@ -360,7 +360,8 @@ def check_address(leasers, address):
         if leaser.address == address:
             return True
         else:
-            return False
+            continue
+    return False
 
 
 def get_holders_boxinode():
