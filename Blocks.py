@@ -428,7 +428,7 @@ def insert_in_table(leasers, total_lease, total_reward, height):
                        + leaser.block_payment * block_fees / 100
                        + int(boxinode_token_fee) / 100 * leaser.boxi_share * total_reward) * reinvest / 100
         boxi_reward = int(boxinode_per_block_reward) * 1000 * leaser.share / 100
-        sql.update_col(addr, "cur_reward", int(calc_reward) 
+        sql.update_col(addr, "cur_reward", int(calc_reward)
                        + int(sql.get_col2("cur_reward", address, "address")[0]), "address")
         sql.update_col(addr, 'cur_boxi_reward', int(boxi_reward)
                        + int(sql.get_col2("cur_boxi_reward", address, "address")[0]), "address")
