@@ -202,12 +202,19 @@ def process_reinvest_security_step(message):
     elif message.text == '1':
         sql.update_col(message.chat.id, 'safety_option', 1, 'telegram_id')
         if sql.get_col("language", message.chat.id, "telegram_id") == "Russian":
-            msg = bot.send_message(message.chat.id, "Вы выбрали первый способ реинвестирования, "
-                                                    "укажите ваш публичный ключ ниже:")
+            if not sql.get_col("public_key", message.chat.id, "telegram_id"):
+                msg = bot.send_message(message.chat.id, "Вы выбрали первый способ реинвестирования,"
+                                                        " укажите ваш публичный ключ ниже:")
+                bot.register_next_step_handler(msg, process_public_key_step)
+            else:
+                bot.send_message(message.chat.id, "Вы выбрали первый способ реинвестирования.")
         else:
-            msg = bot.send_message(message.chat.id, "You chose first method of reinvest, write "
-                                                    "your public key below please:")
-        bot.register_next_step_handler(msg, process_public_key_step)
+            if not sql.get_col("public_key", message.chat.id, "telegram_id"):
+                msg = bot.send_message(message.chat.id, "You chose first method of reinvest, write "
+                                                        "your public key below please:")
+                bot.register_next_step_handler(msg, process_public_key_step)
+            else:
+                bot.send_message(message.chat.id, "You chose first method of reinvest.")
     elif message.text == '2':
         sql.update_col(message.chat.id, 'safety_option', 2, 'telegram_id')
         script = '''`{-# STDLIB_VERSION 3 #-}
