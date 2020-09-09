@@ -556,7 +556,7 @@ def create_payment_json(period, blocks):
         for transfer in masstransfers.values():
             if len(transfer) > 0:
                 sender.massTransferWaves(transfer, attachment="BoxiNode payment")
-        if len(boxinode_masstransfer) > 0 and period == "weekly":
+        if len(boxinode_masstransfer) > 0 and "weekly" in periods:
             sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
     for transfer in masstransfers.values():
         for x in transfer:
