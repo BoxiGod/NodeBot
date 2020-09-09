@@ -337,7 +337,7 @@ def calculate_leasings(mined_block):
             filtered_boxi_holders[address] = amount / total_amount
     for x in lease_amount:
         share = (lease_amount.get(x, "") + my_int(sql.get_col2('cur_reinvest', x, 'address'))
-                 + my_int(sql.get_col2("contract_lease", x, "contract_address"))) / total_lease * 100
+                 + my_int(sql.get_col2("contract_lease", x, "contract_address"))) / total_lease * 100 # myint return 0 if result is None
         if x not in filtered_boxi_holders.keys():
             leasers.append(Leaser(lease_amount=lease_amount.get(x, ""), share=share,
                               fee_payment=share / 100 * fee_reward, block_payment=share / 100 * block_reward,
@@ -493,7 +493,6 @@ def create_payment_json(period, blocks):
                 masstransfer = []
             if int(val[-1]) > 1000 and val[0] not in config.get('payments', 'blacklist').split(","):
                 boxinode_masstransfer.append({'recipient': val[0], 'amount': int(val[-1])})
-    print(boxinode_masstransfer)
     i += 1
     strmstx = "masstransfer" + str(i)
     masstransfers[strmstx] = masstransfer
@@ -557,11 +556,16 @@ def create_payment_json(period, blocks):
         for transfer in masstransfers.values():
             if len(transfer) > 0:
                 sender.massTransferWaves(transfer, attachment="BoxiNode payment")
-        if len(boxinode_masstransfer) > 0:
+        if len(boxinode_masstransfer) > 0 and period == "weekly":
             sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
     for transfer in masstransfers.values():
         for x in transfer:
             notify_payment(x['recipient'], x['amount'], mycursor)
+    for transfer in boxinode_masstransfer:
+        for leaser in transfer.keys():
+            sql = "UPDATE Users SET cur_boxi_reward = 0 WHERE address = '" + leaser + "'"
+            mycursor.execute(sql)
+            mydb.commit()
     for transfer in masstransfers.values():
         for leaser in transfer:
             sql = "UPDATE Users SET cur_reward = 0 WHERE address = '" + leaser['recipient'] + "'"
@@ -596,6 +600,8 @@ def my_int(res):
         return 0
     else:
         return int(res[0])
+
+
 '''
 i = 0
 while i < 10:
@@ -617,3 +623,4 @@ while i < 10:
 # check_blocks_sequence()
 # main()
 # mined_blocks(1921710, 1922262)
+# calculate_leasings(requests.get(url=node + "/blocks/at/" + str(int(requests.get(url=node + "/blocks/last").json()['height']) - 1)).json())
