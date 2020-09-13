@@ -371,7 +371,9 @@ def days_usdn_staking(message):
                              + " WAVES ", reply_markup=reinvest_safety_keyboard_english)
         return
     if message.text.isnumeric():
-        sql.insert_usdn_staking(sql.get_col("address", message.chat.id, "telegram_id"), period_days=message.text)
+        if not sql.get_col("address", sql.get_col("address", message.chat.id, "telegram_id"),
+                           "address", table="USDN_Staking"):
+            sql.insert_usdn_staking(sql.get_col("address", message.chat.id, "telegram_id"), period_days=message.text)
         if sql.get_col("language", message.chat.id, "telegram_id") == "Russian":
             bot.send_message(message.chat.id, "Вы выбрали, что USDN ре-стейкается раз в "
                              + str(int(message.text)) + "(дни)", reply_markup=reinvest_safety_keyboard_russian)
@@ -570,17 +572,13 @@ match (tx) {
         if check_language(telegram_id):
             bot.send_message(telegram_id, "Вам нужно установить следующий скрипт на ваш аккаунт:")
             bot.send_message(telegram_id, script)
-            if not sql.get_col("address", sql.get_col("address", telegram_id, "telegram_id"),
-                               "address", table="USDN_Staking"):
-                msg = bot.send_message(telegram_id, "Как часто хотите рестейкать? Введите число(дни): ", reply_markup=markup)
-                bot.register_next_step_handler(msg, days_usdn_staking)
+            msg = bot.send_message(telegram_id, "Как часто хотите рестейкать? Введите число(дни): ", reply_markup=markup)
+            bot.register_next_step_handler(msg, days_usdn_staking)
         else:
             bot.send_message(telegram_id, "You need to setup following script to your account:", reply_markup=markup)
             bot.send_message(telegram_id, script)
-            if not sql.get_col("address", sql.get_col("address", telegram_id, "telegram_id"),
-                               "address", table="USDN_Staking"):
-                msg = bot.send_message(telegram_id, "How often do you want to re-stake?(days): ", reply_markup=markup)
-                bot.register_next_step_handler(msg, days_usdn_staking)
+            msg = bot.send_message(telegram_id, "How often do you want to re-stake?(days): ", reply_markup=markup)
+            bot.register_next_step_handler(msg, days_usdn_staking)
     if call.data == "withd_leas_yes_eng" or call.data == "withd_leas_yes_rus":
         tx = chain.send_waves(sql.get_col("address", telegram_id, "telegram_id"),
                               sql.get_col("cur_reward", telegram_id, "telegram_id") - 200000, "cur_reward")
