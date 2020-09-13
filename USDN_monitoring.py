@@ -3,7 +3,7 @@ import sql
 import configparser
 import datetime
 import chain
-
+import time
 config = configparser.RawConfigParser()
 config.read('bot.cfg')
 
@@ -35,6 +35,7 @@ def usdn_reinvest():
 def main():
     while True:
         usdn_reinvest()
+        time.sleep(30)
 
 
 main()
