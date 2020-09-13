@@ -538,8 +538,10 @@ def callback_worker(call):
         if not sql.get_col("address", telegram_id, "telegram_id"):
             if not check_language(telegram_id):
                 bot.send_message(telegram_id, "Fitstly you need to /register", reply_markup=main_keyboard_english)
+                return
             else:
                 bot.send_message(telegram_id, "Сначала нужно зарегестрироваться: /register", reply_markup=main_keyboard_russian)
+                return
         script = '''{-# STDLIB_VERSION 3 #-}
 {-# CONTENT_TYPE EXPRESSION #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
