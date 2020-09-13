@@ -486,23 +486,13 @@ def start_message(message):
         else:
             bot.send_message(message.chat.id, "Меню", reply_markup=main_keyboard_russian)
     elif sql.get_col("language", message.chat.id, "telegram_id") == "English":
-        bot.send_message(message.chat.id, "You need to register!")
-        bot.send_message(message.chat.id, "To register in bot send any transaction to "
-                                          "`3P2cC7cwEwnz4z6RFyx7DWnWCtTHBcaL53P`, in attachment "
-                                          "write: "
-                                          "`" + str(message.chat.id) +
-                         "` as only you will send, "
-                         "press "
-                         "button 'Sent'", reply_markup=sent_keyboard_english, parse_mode='Markdown')
+        bot.send_message(message.chat.id, "Welcome! Firstly I recommend to "
+                                          "register with /register command",
+                         reply_markup=main_keyboard_english, parse_mode='Markdown')
     elif sql.get_col("language", message.chat.id, "telegram_id") == "Russian":
-        bot.send_message(message.chat.id, "Вам нужно зарегистрироваться!")
-        bot.send_message(message.chat.id, "Для регистрации отправьте любую тразакцию на адрес "
-                                          "`3P2cC7cwEwnz4z6RFyx7DWnWCtTHBcaL53P`, в описании "
-                                          "транзакции укажите: `"
-                                          "" + str(message.chat.id) +
-                         "`, как только отправите, "
-                         "нажмите кнопку 'отправил'"
-                         "", reply_markup=sent_keyboard_russian, parse_mode='Markdown')
+        bot.send_message(message.chat.id, "Добро пожаловать! Для начала я "
+                                          "рекомендую зарегестрироваться с командой /register",
+                         reply_markup=main_keyboard_russian, parse_mode='Markdown')
     sql.cursor.close()
     sql.mydb.close()
 
