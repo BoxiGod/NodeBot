@@ -374,10 +374,10 @@ def days_usdn_staking(message):
         sql.insert_usdn_staking(sql.get_col("address", message.chat.id, "telegram_id"), period_days=message.text)
         if sql.get_col("language", message.chat.id, "telegram_id") == "Russian":
             bot.send_message(message.chat.id, "Вы выбрали, что USDN ре-стейкается раз в "
-                             + str(int(message.text)) + "(дни)")
+                             + str(int(message.text)) + "(дни)", reply_markup=reinvest_safety_keyboard_russian)
         else:
             bot.send_message(message.chat.id, "You chose that USDN will be re-staking once a "
-                             + str(int(message.text)) + "(days)")
+                             + str(int(message.text)) + "(days)", reply_markup=reinvest_safety_keyboard_english)
 
     else:
         if check_language(message.chat.id):
