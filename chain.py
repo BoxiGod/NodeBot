@@ -4,13 +4,45 @@ import sql
 import configparser
 import time
 import json
+import datetime
 
 config = configparser.RawConfigParser()
 config.read('bot.cfg')
 
 node_address = config.get('account', 'address')
 node_private_key = config.get('account', 'private_key')
-pw.setNode(config.get('blockchain', 'node'))
+node_api = config.get('blockchain', 'node')
+usdn_node_address = config.get('payments', 'usdn_node_address')
+pw.setNode(node_api)
+
+
+def check_usdn_payment(address, last_payments):
+    txs = requests.get(node_api + "/transactions/address/" + address + "/limit/100").json()
+    cur_date = datetime.datetime.now()
+    counter = 0
+    total_amount = 0
+    for tx in txs[0]:
+        if tx['sender'] == usdn_node_address:
+            if counter == last_payments:
+                break
+            if counter == 0 and datetime.date.fromtimestamp(tx['timestamp']/1000).day == cur_date.day:
+                total_amount += tx['transfers'][0]['amount']
+                counter += 1
+                continue
+            total_amount += tx['transfers'][0]['amount']
+            counter += 1
+    return total_amount
+
+
+def usdn_reinvest(address, amount):
+    node = pw.Address(privateKey=node_private_key)
+    sender = pw.Address(publicKey=sql.get_col("public_key", address, "address"))
+    tx = sender.invokeScript("3PNikM6yp4NqcSU8guxQtmR5onr2D4e8yTJ", "lockNeutrino", [],
+                             [{"amount": amount, "assetId": "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p"}],
+                             txFee=900000, signer=node)
+    if 'error' not in tx:
+        return True
+    return False
 
 
 def re_lease(address, amount):
@@ -38,7 +70,7 @@ def re_lease(address, amount):
 
 
 def get_leasing_balance(address):
-    lb = requests.get(url=config.get('blockchain', 'node') + '/leasing/active/' + address).json()
+    lb = requests.get(url=node_api + '/leasing/active/' + address).json()
     if len(lb) == 0:
         return 0
     total = 0
@@ -157,7 +189,7 @@ def withdraw_sa(public_key, contract_private_key):
     script_account = pw.Address(privateKey=contract_private_key)
     node = pw.Address(privateKey=node_private_key)
     owner = pw.Address(address=sql.get_col("address", public_key, "public_key"))
-    leasings = requests.get(url=config.get('blockchain', 'node') + '/leasing/active/' + sql.get_col("contract_address", public_key, "public_key")).json()
+    leasings = requests.get(url=node_api + '/leasing/active/' + sql.get_col("contract_address", public_key, "public_key")).json()
     for lease in leasings:
         tx = script_account.leaseCancel(leaseId=lease['id'], signer=node, txFee=500000)
         if 'error' not in tx:

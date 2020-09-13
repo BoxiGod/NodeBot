@@ -1,6 +1,6 @@
 import mysql.connector
 import configparser
-
+from datetime import datetime
 config = configparser.RawConfigParser()
 config.read('bot.cfg')
 
@@ -25,11 +25,14 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Users (address CHAR(50), leased BIGIN
                "reinvest INT, cur_reward BIGINT, cur_reinvest BIGINT, boxinode_balance INT, "
                "language CHAR(20), telegram_id INT, step INT, threshold BIGINT, public_key CHAR(50), "
                "contract_address CHAR(50), contract_lease BIGINT, "
-               " contract_pending_lease BIGINT, contract_private_key CHAR(50), safety_option INT, "
+               "contract_pending_lease BIGINT, contract_private_key CHAR(50), safety_option INT, "
                "cur_boxi_reward BIGINT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Reinvest (start_reinvest INT, amount_reinvest BIGINT, address CHAR(50))")
 cursor.execute("CREATE TABLE IF NOT EXISTS NodeStats (date_today DATE, total_leasers BIGINT, "
                "lease_amount BIGINT, lease_payment BIGINT, apr FLOAT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS "
+               "USDN_Staking (address CHAR(50), period_days INT, "
+               "active INT, start_date DATE)")
 mydb.commit()
 mydb.close()
 cursor.close()
@@ -54,6 +57,13 @@ def insert_reinvest(start_reinvest, amount_reinvest, address):
     mydb.commit()
 
 
+def insert_usdn_staking(address, period_days=7, active=1, start_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S')):
+    sql = "INSERT INTO USDN_Staking (address, period_days, active, start_date) VALUES (%s, %s, %s, %s)"
+    val = (str(address), str(period_days), str(active), str(start_date))
+    cursor.execute(sql, val)
+    mydb.commit()
+
+
 def get_reinvest_col(select_column, column, search_column):
     cursor.itersize = 1
     sql = "SELECT " + str(select_column) + " FROM Reinvest WHERE " + str(search_column) + " = '" + str(column) + "'"
@@ -72,13 +82,15 @@ def delete_reinvest_col(user_id, set_col):
 
 
 def delete_col(col, condition, col2, condition2):
-    sql = "DELETE From Users WHERE " + str(col) + "='" + str(condition) + "' AND " + str(col2) + "='" + str(condition2) + "'"
+    sql = "DELETE From Users WHERE " + str(col) + "='" + str(condition) \
+          + "' AND " + str(col2) + "='" + str(condition2) + "'"
     cursor.execute(sql)
     mydb.commit()
 
 
-def update_col(user_id, col, new_val, set_col):
-    sql = "UPDATE Users SET " + str(col) + "= '" + str(new_val) + "' WHERE " + str(set_col) + "='" + str(user_id) + "'"
+def update_col(set_val, upd_col, upd_val, set_col, table="Users"):
+    sql = "UPDATE " + table + " SET " + str(upd_col) + "= '" + str(upd_val) \
+          + "' WHERE " + str(set_col) + "='" + str(set_val) + "'"
     cursor.execute(sql)
     mydb.commit()
 
@@ -96,15 +108,17 @@ def insert_user(address, leased, pendingLease, cur_payment_ratio_fees, cur_payme
     val = (address, str(leased), str(pendingLease), str(cur_payment_ratio_fees),
            str(cur_payment_ratio_block_reward), payment_period, str(reinvest), str(cur_reward),
            str(cur_reinvest), str(boxinode_balance), language, str(tg_id), str(step), str(threshold),
-           str(public_key), str(contract_address), str(contract_lease)
-           , str(contract_pending_lease), str(contract_private_key), str(safety_option), str(cur_boxi_reward))
+           str(public_key), str(contract_address), str(contract_lease),
+           str(contract_pending_lease), str(contract_private_key),
+           str(safety_option), str(cur_boxi_reward))
     cursor.execute(sql, val)
     mydb.commit()
 
 
-def get_col(select_column, column, search_column):
+def get_col(select_column, column, search_column, table="Users"):
     cursor.itersize = 1
-    sql = "SELECT " + str(select_column) + " FROM Users WHERE " + str(search_column) + " = '" + str(column) + "'"
+    sql = "SELECT " + str(select_column) + " FROM " + table + " WHERE " \
+          + str(search_column) + " = '" + str(column) + "'"
     cursor.execute(sql)
     result = cursor.fetchall()
     try:
