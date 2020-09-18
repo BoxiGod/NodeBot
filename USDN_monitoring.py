@@ -35,7 +35,7 @@ def usdn_reinvest():
 def main():
     while True:
         usdn_reinvest()
-        time.sleep(30)
+        time.sleep(29)
 
 
 main()
