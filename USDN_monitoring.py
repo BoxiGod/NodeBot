@@ -29,7 +29,7 @@ def usdn_reinvest():
         cur_date = datetime.datetime.now()
         if amount > 0 and (datetime.date(cur_date.year, cur_date.month, cur_date.day) - val[-1]).days == days:
             if chain.usdn_reinvest(val[0], amount):
-                sql.update_col(val[0], "start_date", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "address")
+                sql.update_col("3PAvNiTAtvEh8BS9ouRGX5aqHo3ZLWEUfyh", "start_date", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "address", table="USDN_Staking")
 
 
 def main():
