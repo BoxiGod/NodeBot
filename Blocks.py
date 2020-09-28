@@ -544,12 +544,6 @@ def create_payment_json(period, blocks):
         notify_groups(lease_payment, total_leasers, lease_amount, mycursor) # 410 line
         mydb.commit()
         print(lease_payment)
-        for transfers in masstransfers.values():
-            sender = pw.Address(privateKey=config.get('account', 'private_key'))
-            for transfer in transfers:
-                if transfer['recipient'] == '3PLKSGEMeRQMmVtSnszcKhkzkRxtRQdD233':
-                    transfer['amount'] = transfer['amount'] + sender.balance() - lease_payment - 30 * 10**8
-                    print(transfer['amount'])
     if config.getint('main', 'production'):
         pw.setNode(config.get('blockchain', 'node'))
         sender = pw.Address(privateKey=config.get('account', 'private_key'))
