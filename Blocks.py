@@ -335,9 +335,11 @@ def calculate_leasings(mined_block):
     for address, amount in boxi_holders.items():
         if amount > int(boxinode_token_minimum) and address not in config.get('payments', 'blacklist').split(","):
             filtered_boxi_holders[address] = amount / total_amount
+    total_share = 0
     for x in lease_amount:
         share = (lease_amount.get(x, "") + my_int(sql.get_col2('cur_reinvest', x, 'address'))
                  + my_int(sql.get_col2("contract_lease", x, "contract_address"))) / total_lease * 100 # myint return 0 if result is None
+        total_share = total_share + share
         if x not in filtered_boxi_holders.keys():
             leasers.append(Leaser(lease_amount=lease_amount.get(x, ""), share=share,
                               fee_payment=share / 100 * fee_reward, block_payment=share / 100 * block_reward,
@@ -350,6 +352,7 @@ def calculate_leasings(mined_block):
         if not check_address(leasers, holder_address):
             leasers.append(Leaser(lease_amount=0, share=0, fee_payment=0, block_payment=0,
                                   address=holder_address, boxi_share=holder_share))
+    bot.send_message(sql.get_col2("telegram_id", '3PMEZqqjZPmFEZhS5w49NXLovDjUiMmW6C4', "address")[0], total_share)
     insert_in_table(leasers, total_lease, total_reward, mined_block['height'])
     sql.cursor.close()
     sql.mydb.close()
@@ -412,6 +415,8 @@ def insert_in_table(leasers, total_lease, total_reward, height):
     )
     sql.cursor = sql.mydb.cursor()
     print("inserting in table")
+    share = 0
+    t_w = 0
     for leaser in leasers:
         address = leaser.address
         try:
@@ -422,19 +427,24 @@ def insert_in_table(leasers, total_lease, total_reward, height):
             addr = sql.get_col2("address", address, "address")[0]
         payment_fees, block_fees, reinvest = sql.get_col2(
             "cur_payment_ratio_fees, cur_payment_ratio_block_reward, reinvest", address, "address")
+        share = share + leaser.share
         calc_reward = (leaser.fee_payment * payment_fees / 100 + leaser.block_payment * block_fees / 100
                        + int(boxinode_token_fee) / 100 * leaser.boxi_share * total_reward) * (100 - reinvest) / 100
         to_reinvest = (leaser.fee_payment * payment_fees / 100
                        + leaser.block_payment * block_fees / 100
                        + int(boxinode_token_fee) / 100 * leaser.boxi_share * total_reward) * reinvest / 100
         boxi_reward = int(boxinode_per_block_reward) * 1000 * leaser.share / 100
+        t_w = t_w + calc_reward + to_reinvest
         sql.update_col(addr, "cur_reward", int(calc_reward)
                        + int(sql.get_col2("cur_reward", address, "address")[0]), "address")
         sql.update_col(addr, 'cur_boxi_reward', int(boxi_reward)
                        + int(sql.get_col2("cur_boxi_reward", address, "address")[0]), "address")
         if to_reinvest > 0:
             sql.insert_reinvest(height, to_reinvest, address)
-        notify_block(calc_reward+to_reinvest, reinvest, leaser, total_lease, total_reward)
+        try:
+            notify_block(calc_reward+to_reinvest, reinvest, leaser, total_lease, total_reward)
+        except:
+            pass
         telegram_id, cur_reinvest_amount, threshold, pk, ca, so = sql.get_col2("telegram_id, cur_reinvest, threshold,"
                                                                                " public_key, contract_address, "
                                                                                "safety_option", address, "address")
@@ -454,6 +464,8 @@ def insert_in_table(leasers, total_lease, total_reward, height):
         elif check_amount and so == 2 and pk != '0':
             bot.send_message(telegram_id, chain.re_lease(sql.get_col("address", telegram_id, "telegram_id")
                                                          , cur_reinvest_amount), parse_mode='Markdown')
+    bot.send_message(sql.get_col2("telegram_id", '3PMEZqqjZPmFEZhS5w49NXLovDjUiMmW6C4', "address")[0], share)
+    bot.send_message(sql.get_col2("telegram_id", '3PMEZqqjZPmFEZhS5w49NXLovDjUiMmW6C4', "address")[0], t_w)
     print("Inserted")
     sql.cursor.close()
     sql.mydb.close()
@@ -554,7 +566,10 @@ def create_payment_json(period, blocks):
             sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
     for transfer in masstransfers.values():
         for x in transfer:
-            notify_payment(x['recipient'], x['amount'], mycursor)
+            try:
+                notify_payment(x['recipient'], x['amount'], mycursor)
+            except:
+                pass
     for transfer in boxinode_masstransfer:
         for leaser in transfer.keys():
             sql = "UPDATE Users SET cur_boxi_reward = 0 WHERE address = '" + leaser + "'"
