@@ -486,6 +486,8 @@ def create_payment_json(period, blocks):
     masstransfers = {}
     masstransfer = []
     boxinode_masstransfer = []
+    boxi_success = 0
+    waves_success = 0
     i = 0
     if period == "daily":
         periods = ['daily']
@@ -559,27 +561,37 @@ def create_payment_json(period, blocks):
     if config.getint('main', 'production'):
         pw.setNode(config.get('blockchain', 'node'))
         sender = pw.Address(privateKey=config.get('account', 'private_key'))
-        for transfer in masstransfers.values():
-            if len(transfer) > 0:
-                sender.massTransferWaves(transfer, attachment="BoxiNode payment")
-        if len(boxinode_masstransfer) > 0 and "weekly" in periods:
-            sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
+        try:
+            for transfer in masstransfers.values():
+                if len(transfer) > 0:
+                    sender.massTransferWaves(transfer, attachment="BoxiNode payment")
+            waves_success = 1
+        except:
+            pass
+        try:
+            if len(boxinode_masstransfer) > 0 and "weekly" in periods:
+                sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
+                boxi_success = 1
+        except:
+            pass
     for transfer in masstransfers.values():
         for x in transfer:
             try:
                 notify_payment(x['recipient'], x['amount'], mycursor)
             except:
                 pass
-    for transfer in boxinode_masstransfer:
-        for leaser in transfer.keys():
-            sql = "UPDATE Users SET cur_boxi_reward = 0 WHERE address = '" + leaser + "'"
-            mycursor.execute(sql)
-            mydb.commit()
-    for transfer in masstransfers.values():
-        for leaser in transfer:
-            sql = "UPDATE Users SET cur_reward = 0 WHERE address = '" + leaser['recipient'] + "'"
-            mycursor.execute(sql)
-            mydb.commit()
+    if boxi_success:
+        for transfer in boxinode_masstransfer:
+            for leaser in transfer.keys():
+                sql = "UPDATE Users SET cur_boxi_reward = 0 WHERE address = '" + leaser + "'"
+                mycursor.execute(sql)
+                mydb.commit()
+    if waves_success:
+        for transfer in masstransfers.values():
+            for leaser in transfer:
+                sql = "UPDATE Users SET cur_reward = 0 WHERE address = '" + leaser['recipient'] + "'"
+                mycursor.execute(sql)
+                mydb.commit()
     mycursor.close()
     mydb.close()
 
