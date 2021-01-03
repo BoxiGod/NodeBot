@@ -460,7 +460,7 @@ def start_message(message):
     if message.text == '/register':
         if sql.get_col("language", message.chat.id, "telegram_id") == "English":
             bot.send_message(message.chat.id, "To register in bot send any transaction to "
-                                              "\n`3P2cC7cwEwnz4z6RFyx7DWnWCtTHBcaL53P`\n\nIn attachment "
+                                              "\n`3P2cC7cwEwnz4z6RFyx7DWnWCtTHBcaL53P`\n\nIn description "
                                               "write: "
                                               "\n`" + str(message.chat.id) +
                              "`\n\nAs only you will send, "
