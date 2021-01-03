@@ -488,6 +488,7 @@ def create_payment_json(period, blocks):
     boxinode_masstransfer = []
     boxi_success = 0
     waves_success = 0
+    tx = 0
     i = 0
     if period == "daily":
         periods = ['daily']
@@ -564,15 +565,21 @@ def create_payment_json(period, blocks):
         try:
             for transfer in masstransfers.values():
                 if len(transfer) > 0:
-                    sender.massTransferWaves(transfer, attachment="BoxiNode payment")
+                    if len(transfer) == 1:
+                        tx = sender.sendWaves(pw.Address(transfer[0]['recipient']),
+                                              transfer[0]['amount'] + 50000, attachment="BoxiNode payment")
+                    else:
+                        tx = sender.massTransferWaves(transfer, attachment="BoxiNode payment")
             waves_success = 1
         except:
+            print("error boxi payment " + tx)
             pass
         try:
             if len(boxinode_masstransfer) > 0 and "weekly" in periods:
-                sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
+                tx = sender.massTransferAssets(boxinode_masstransfer, pw.Asset('EgdXZCDja5H54dQqvY1GbJEjJ4TzpNtBsj45m1UmQFa2'), attachment="BoxiNode payment")
                 boxi_success = 1
         except:
+            print("error boxi payment " + tx)
             pass
     for transfer in masstransfers.values():
         for x in transfer:
