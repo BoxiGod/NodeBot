@@ -84,14 +84,14 @@ def send_waves(recipient, amount, type):
     sa = 0 if sql.get_col("contract_address", sql.get_col("telegram_id", recipient, "address"), 'telegram_id') == '0' else pw.Address(
         address=sql.get_col("contract_address", sql.get_col("telegram_id", recipient, "address"), 'telegram_id')).balance()
     node = pw.Address(privateKey=node_private_key)
-    print(sa)
     if (type == "total" or type == "sa") and sa > 500000:
         tx = withdraw_sa(sql.get_col("public_key", recipient, "address"),
                 sql.get_col("contract_private_key", recipient, "address"))
         if not tx:
             return False
     if type != "sa" and amount < 10*10**8:
-        tx = node.sendWaves(recipient=pw.Address(recipient), amount=amount, attachment="Withdraw leasing reward from @BoxiNodeBot")
+        tx = node.sendWaves(recipient=pw.Address(recipient), amount=amount,
+                            attachment="Withdraw leasing reward from @BoxiNodeBot")
     else:
         return False
     if "error" not in tx:
@@ -206,5 +206,3 @@ def withdraw_sa(public_key, contract_private_key):
             print(tx)
             return "Error withdraw: " + json.dumps(tx)
     return True
-
-
