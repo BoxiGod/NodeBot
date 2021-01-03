@@ -1,4 +1,5 @@
-/TestSA.py
-/TestNewSA.py
+/Test*
 /bot.cfg
 /scratch*
+/*.json
+/*.xml
